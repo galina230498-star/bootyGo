@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bootyGo – Liegeplatzsuche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0f2a3d; --sea:#1d6f8a; --foam:#e8f3f5; --sand:#f6f1e7; --line:#d5e2e6;
+    --ok:#2f7d4f; --okbg:#e3f2e8; --no:#a63d32; --nobg:#f8e5e2; --warn:#9a6a12; --warnbg:#fbf0d9;
+    --ink:#16232c; --muted:#5b6b75; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--sand);line-height:1.5}
+  header{background:var(--navy);color:#fff;padding:28px 20px 0}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+  header .wrap{padding:0}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:46px;height:46px}
+  h1{font-family:Fraunces,Georgia,serif;font-size:34px;margin:0;letter-spacing:-.5px}
+  h1 span{color:#7fd3e6}
+  .tag{color:#b9d3dc;margin:4px 0 0;font-size:15px}
+  .proto{display:inline-block;margin-top:10px;font-size:12px;background:rgba(255,255,255,.12);padding:3px 10px;border-radius:99px;color:#dbeef3}
+  nav{display:flex;gap:4px;margin-top:22px;overflow-x:auto}
+  nav button{background:none;border:0;color:#b9d3dc;font:600 14px Inter,sans-serif;padding:12px 16px;border-radius:10px 10px 0 0;cursor:pointer;white-space:nowrap}
+  nav button.active{background:var(--sand);color:var(--navy)}
+  main{padding:28px 0 60px}
+  section.view{display:none}
+  section.view.active{display:block}
+  h2{font-family:Fraunces,Georgia,serif;font-size:24px;margin:0 0 6px;color:var(--navy)}
+  h3{font-size:16px;margin:26px 0 10px;color:var(--navy)}
+  p.lead{color:var(--muted);margin:0 0 20px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:18px}
+  .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+  .controls label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+  input[type=number]{font:16px Inter,sans-serif;padding:9px 12px;border:1px solid var(--line);border-radius:8px;width:140px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:#fff;padding:9px 14px;font:500 14px Inter,sans-serif;cursor:pointer;color:var(--ink)}
+  .seg button.on{background:var(--sea);color:#fff}
+  .btn{border:1px solid var(--line);background:#fff;padding:9px 14px;border-radius:8px;font:500 14px Inter,sans-serif;cursor:pointer}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:16px}
+  .berth{border-radius:12px;padding:14px;border:2px solid var(--ok);background:var(--okbg)}
+  .berth .id{font-family:Fraunces,serif;font-size:26px;color:var(--navy)}
+  .berth .len{font-size:14px;color:var(--muted)}
+  .empty{padding:18px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);margin-top:16px}
+  .summary{margin-top:14px;font-weight:600;color:var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600}
+  .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}
+  .p-frei{background:var(--okbg);color:var(--ok)}
+  .p-belegt{background:var(--nobg);color:var(--no)}
+  .p-reserviert{background:var(--warnbg);color:var(--warn)}
+  .yes{color:var(--ok);font-weight:600}
+  .noo{color:var(--no);font-weight:600}
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .col{background:var(--foam);border-radius:12px;padding:10px;min-height:140px}
+  .col h4{margin:4px 4px 10px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--sea)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-bottom:8px;font-size:14px;cursor:pointer;transition:transform .1s}
+  .card:hover{transform:translateY(-1px);border-color:var(--sea)}
+  .card small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  ul.check{list-style:none;padding:0;margin:0}
+  ul.check li{padding:7px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:flex-start}
+  ul.check li:last-child{border:0}
+  ul.check input{margin-top:4px;accent-color:var(--sea)}
+  .goal{background:var(--navy);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:16px}
+  .goal b{color:#7fd3e6}
+  .note{border-left:4px solid var(--sea);padding:8px 14px;background:#fff;border-radius:0 10px 10px 0;margin:10px 0}
+  .note.retro{border-color:#8a6bb5}
+  .note.wish{border-color:var(--warn);background:var(--warnbg)}
+  textarea{width:100%;min-height:70px;font:14px Inter,sans-serif;padding:10px;border:1px solid var(--line);border-radius:8px;resize:vertical}
+  @media (max-width:720px){.board,.two{grid-template-columns:1fr} h1{font-size:28px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="23" fill="#1d6f8a"/>
+        <path d="M24 9v22M24 11l10 14H24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M11 31h26l-4 6H15z" fill="#fff"/>
+        <path d="M8 40c4 0 4-2 8-2s4 2 8 2 4-2 8-2 4 2 8 2" fill="none" stroke="#7fd3e6" stroke-width="2"/>
+      </svg>
+      <div>
+        <h1>booty<span>Go</span></h1>
+        <p class="tag">Liegeplatzsuche für die Hafenverwaltung</p>
+      </div>
+    </div>
+    <span class="proto">Prototyp · LF8 Scrum-Übung · Jachthafen</span>
+    <nav id="nav">
+      <button data-v="suche" class="active">Liegeplatzsuche</button>
+      <button data-v="backlog">Product Backlog</button>
+      <button data-v="sprint1">Sprint 1</button>
+      <button data-v="sprint2">Sprint 2</button>
+      <button data-v="dod">Definition of Done</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============ SUCHE ============ -->
+<section class="view active" id="suche">
+  <h2>Freien Liegeplatz finden</h2>
+  <p class="lead">Wähle die Ansicht oder gib eine Bootslänge ein. Es erscheinen nur freie Plätze, die zur Bootslänge passen.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <label>Ansicht
+        <div class="seg" id="seg">
+          <button data-a="1" class="on">Ansicht 1: alle freien</button>
+          <button data-a="2">Ansicht 2: Boot 9 m</button>
+        </div>
+      </label>
+      <label>Bootslänge in m (optional)
+        <input type="number" id="len" min="0" step="0.5" placeholder="z. B. 9">
+      </label>
+      <button class="btn" id="reset">Zurücksetzen</button>
+    </div>
+    <div id="result"></div>
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin-top:0">Prüfung gegen alle sechs Datensätze</h3>
+    <table>
+      <thead><tr><th>Liegeplatz</th><th>Max. Bootslänge</th><th>Status</th><th>Erscheint?</th><th>Begründung</th></tr></thead>
+      <tbody id="check"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ BACKLOG ============ -->
+<section class="view" id="backlog">
+  <h2>Product Backlog</h2>
+  <p class="lead">Wünsche der Hafenverwaltung, nach Nutzen sortiert. Priorität 1 = zuerst.</p>
+  <div class="panel">
+    <table>
+      <thead><tr><th>Prio</th><th>User Story</th><th>Akzeptanzkriterium</th><th>Sprint</th></tr></thead>
+      <tbody>
+        <tr><td><b>1</b></td>
+          <td>Als Hafenverwaltung möchte ich freie Plätze sehen, damit ich freie Kapazitäten erkenne.</td>
+          <td>Alle freien Plätze erscheinen; belegte und reservierte Plätze erscheinen nicht.</td>
+          <td>Sprint 1</td></tr>
+        <tr><td><b>2</b></td>
+          <td>Als Hafenverwaltung möchte ich für ein 9 m langes Boot nur freie Plätze mit maximaler Bootslänge von mindestens 9 m sehen, damit ich sofort einen geeigneten Platz zuweisen kann.<br><small style="color:var(--muted)">Im Review von Sprint 1 präzisiert (neuer Wunsch).</small></td>
+          <td>Es erscheint nur P04. P01 (6 m) und P05 (8 m) erscheinen nicht. Belegte und reservierte Plätze erscheinen nicht.</td>
+          <td>Sprint 2</td></tr>
+        <tr><td><b>3</b></td>
+          <td>Als Hafenverwaltung möchte ich die freien Plätze nach maximaler Länge aufsteigend sortiert sehen, damit ich den kleinsten passenden Platz vergebe.</td>
+          <td>Die freien Plätze erscheinen in der Reihenfolge 6 m, 8 m, 12 m.</td>
+          <td>offen</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note wish"><b>Neuer Wunsch im Review Sprint 1:</b> „Für ein 9 m langes Boot sollen nur freie Plätze erscheinen, deren maximale Bootslänge mindestens 9 m beträgt.“</div>
+</section>
+
+<!-- ============ SPRINT 1 ============ -->
+<section class="view" id="sprint1">
+  <h2>Sprint 1 · Freie Plätze anzeigen</h2>
+  <div class="goal"><b>Sprintziel:</b> Die Hafenverwaltung sieht alle freien Liegeplätze auf einen Blick.<br><b>Story:</b> Priorität 1</div>
+  <h3>Sprint Backlog</h3>
+  <div class="board" id="board1"></div>
+  <p class="hint">Karte anklicken, um sie eine Spalte weiterzuschieben (Offen → In Arbeit → Fertig → Offen).</p>
+
+  <h3>Increment: Ansicht 1</h3>
+  <div class="panel">
+    <b>Freie Liegeplätze:</b> P01 (6 m), P04 (12 m), P05 (8 m)<br>
+    <b>Prüfergebnis:</b> 3 von 6 Plätzen erscheinen. P02 und P06 sind belegt, P03 ist reserviert. Akzeptanzkriterium erfüllt, DoD erfüllt.
+  </div>
+
+  <div class="two">
+    <div>
+      <h3>Review</h3>
+      <div class="note">Ansicht 1 präsentiert. Nutzen: Die Verwaltung erkennt sofort die freie Kapazität (3 Plätze). Neuer Wunsch zum 9-m-Boot wurde als Story mit Priorität 2 ins Product Backlog aufgenommen.</div>
+      <textarea placeholder="Eigene Review-Notizen …"></textarea>
+    </div>
+    <div>
+      <h3>Retrospektive</h3>
+      <div class="note retro"><b>Beobachtung:</b> Karten wurden zu spät verschoben, zwei Personen haben dieselbe Aufgabe bearbeitet.<br><b>Maßnahme für Sprint 2:</b> Auf jede Karte kommt der Name der bearbeitenden Person; Karten werden sofort verschoben.</div>
+      <textarea placeholder="Eigene Retro-Notizen …"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SPRINT 2 ============ -->
+<section class="view" id="sprint2">
+  <h2>Sprint 2 · Filter für das 9-m-Boot</h2>
+  <div class="goal"><b>Sprintziel:</b> Die Hafenverwaltung findet für ein 9-m-Boot passende freie Plätze.<br><b>Story:</b> Filter-Story (Priorität 2) · <b>Teammaßnahme:</b> Namen auf Karten</div>
+  <h3>Sprint Backlog</h3>
+  <div class="board" id="board2"></div>
+  <p class="hint">Karte anklicken, um sie weiterzuschieben.</p>
+
+  <h3>Increment: Ansicht 2</h3>
+  <div class="panel">
+    <b>Freie Liegeplätze für ein 9-m-Boot:</b> P04 (12 m)<br>
+    <b>Prüfergebnis:</b> P04 erscheint (frei, 12 m ≥ 9 m). P01 und P05 sind frei, aber zu kurz. P02 wäre lang genug (10 m), ist aber belegt. P06 ist belegt, P03 reserviert. Akzeptanzkriterium erfüllt, DoD erfüllt.
+  </div>
+
+  <div class="two">
+    <div>
+      <h3>Review</h3>
+      <div class="note">Ansicht 2 präsentiert und gemeinsam geprüft. Rückmeldung zum Nutzen: Die Verwaltung sieht sofort den einzigen passenden Platz und muss nicht selbst vergleichen.</div>
+      <textarea placeholder="Eigene Review-Notizen …"></textarea>
+    </div>
+    <div>
+      <h3>Retrospektive</h3>
+      <div class="note retro">Die Maßnahme hat geholfen: Niemand hat doppelt gearbeitet.<br><b>Beibehalten:</b> Namen auf Karten, Gegenprüfung durch eine zweite Person.<br><b>Ändern:</b> DoD zu Beginn jedes Sprints kurz gemeinsam vorlesen.</div>
+      <textarea placeholder="Eigene Retro-Notizen …"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DOD ============ -->
+<section class="view" id="dod">
+  <h2>Definition of Done</h2>
+  <p class="lead">Gilt für beide Sprints. Das Akzeptanzkriterium prüft zusätzlich den jeweiligen Nutzerwunsch.</p>
+  <div class="panel">
+    <ul class="check">
+      <li><input type="checkbox" id="d1"><label for="d1">Die Ansicht hat eine Überschrift.</label></li>
+      <li><input type="checkbox" id="d2"><label for="d2">Jede Zeile zeigt Platz-ID, maximale Länge mit Einheit „m“ und Status.</label></li>
+      <li><input type="checkbox" id="d3"><label for="d3">Alle sechs Datensätze sind einzeln geprüft (Abhakliste).</label></li>
+      <li><input type="checkbox" id="d4"><label for="d4">Eine zweite Person hat das Ergebnis gegengeprüft.</label></li>
+      <li><input type="checkbox" id="d5"><label for="d5">Das Prüfergebnis steht auf dem Whiteboard.</label></li>
+    </ul>
+    <div class="summary" id="dodState"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const plaetze = [
+  {id:"P01", len:6,  status:"frei"},
+  {id:"P02", len:10, status:"belegt"},
+  {id:"P03", len:8,  status:"reserviert"},
+  {id:"P04", len:12, status:"frei"},
+  {id:"P05", len:8,  status:"frei"},
+  {id:"P06", len:6,  status:"belegt"}
+];
+
+const lenInput = document.getElementById("len");
+const seg = document.getElementById("seg");
+
+function bewerten(p, boot){
+  if(p.status !== "frei") return {ok:false, grund:`Platz ist ${p.status}.`};
+  if(boot && p.len < boot) return {ok:false, grund:`Frei, aber zu kurz: ${p.len} m < ${boot} m.`};
+  if(boot) return {ok:true, grund:`Frei und ${p.len} m ≥ ${boot} m.`};
+  return {ok:true, grund:"Platz ist frei."};
+}
+
+function render(){
+  const boot = parseFloat(lenInput.value) || 0;
+  const treffer = plaetze.filter(p => bewerten(p, boot).ok);
+  const res = document.getElementById("result");
+  if(treffer.length){
+    res.innerHTML = '<div class="grid">' + treffer.map(p =>
+      `<div class="berth"><div class="id">${p.id}</div><div class="len">max. Bootslänge ${p.len} m</div><span class="pill p-frei">frei</span></div>`
+    ).join("") + "</div>";
+  } else {
+    res.innerHTML = '<div class="empty">Kein passender freier Liegeplatz gefunden.</div>';
+  }
+  document.getElementById("summary").textContent =
+    `${treffer.length} von ${plaetze.length} Plätzen erscheinen` + (boot ? ` für ein ${boot}-m-Boot.` : ".");
+  document.getElementById("check").innerHTML = plaetze.map(p => {
+    const b = bewerten(p, boot);
+    return `<tr><td><b>${p.id}</b></td><td>${p.len} m</td><td><span class="pill p-${p.status}">${p.status}</span></td>
+      <td class="${b.ok?'yes':'noo'}">${b.ok?'ja':'nein'}</td><td>${b.grund}</td></tr>`;
+  }).join("");
+  seg.querySelectorAll("button").forEach(btn => {
+    btn.classList.toggle("on", (btn.dataset.a==="1" && !boot) || (btn.dataset.a==="2" && boot===9));
+  });
+}
+
+seg.addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  lenInput.value = b.dataset.a === "2" ? 9 : "";
+  render();
+});
+lenInput.addEventListener("input", render);
+document.getElementById("reset").onclick = () => { lenInput.value=""; render(); };
+
+/* Navigation */
+const nav = document.getElementById("nav");
+function show(v){
+  document.querySelectorAll(".view").forEach(s => s.classList.toggle("active", s.id===v));
+  nav.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.v===v));
+}
+nav.addEventListener("click", e => { const b=e.target.closest("button"); if(b) show(b.dataset.v); });
+
+/* Kanban-Boards */
+const spalten = ["Offen","In Arbeit","Fertig"];
+const boards = {
+  board1: [
+    {t:"Sechs Datensätze sichten", s:2},
+    {t:"Regel festlegen: nur Status „frei“", s:2},
+    {t:"Ansicht 1 als Liste erstellen", s:2},
+    {t:"Ansicht prüfen (Akzeptanzkriterium + DoD)", s:2},
+    {t:"Prüfergebnis auf Whiteboard notieren", s:2}
+  ],
+  board2: [
+    {t:"Längenregel festlegen: max. Länge ≥ 9 m", s:2, n:"Name"},
+    {t:"Ansicht 1 um Längenfilter erweitern", s:2, n:"Name"},
+    {t:"Alle sechs Datensätze gegen beide Regeln prüfen", s:2, n:"Name"},
+    {t:"Prüfen nach DoD und Akzeptanzkriterium", s:2, n:"Name"},
+    {t:"Prüfergebnis notieren", s:2, n:"Name"}
+  ]
+};
+function renderBoard(id){
+  const el = document.getElementById(id);
+  el.innerHTML = spalten.map((name,i) =>
+    `<div class="col"><h4>${name}</h4>` +
+    boards[id].map((c,k) => c.s===i ? `<div class="card" data-k="${k}">${c.t}${c.n?`<small>bearbeitet von: ${c.n}</small>`:""}</div>` : "").join("") +
+    `</div>`).join("");
+}
+["board1","board2"].forEach(id => {
+  renderBoard(id);
+  document.getElementById(id).addEventListener("click", e => {
+    const c = e.target.closest(".card"); if(!c) return;
+    const card = boards[id][+c.dataset.k];
+    card.s = (card.s + 1) % 3;
+    renderBoard(id);
+  });
+});
+
+/* DoD */
+function dodState(){
+  const boxes=[...document.querySelectorAll("#dod input")];
+  const n=boxes.filter(b=>b.checked).length;
+  document.getElementById("dodState").textContent = n===boxes.length ? "Alle Kriterien erfüllt: Ansicht ist fertig." : `${n} von ${boxes.length} Kriterien erfüllt.`;
+}
+document.querySelectorAll("#dod input").forEach(b=>b.addEventListener("change",dodState));
+
+render(); dodState();
+</script>
+</body>
+</html>
